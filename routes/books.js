@@ -4,6 +4,7 @@ const path = require('path')
 
 const multer = require('multer')
 const uploadPath = path.join('public', Book.coverImageBasePath)
+const imageMimeTypes = ['image/jpeg', 'image/png', 'images/gif']
 
 const Book = require('../models/book')
 const Author = require('../models/author')
@@ -23,18 +24,7 @@ res.send("All Books")
 
 // new book routes
 router.get('/new', async (req, res) => {
-  try {
-    const authors = await Author.find({})
-    const book = new Book()
-    res.render('books/new', {
-      authors : authors,
-      book : book
-    })
-  } catch {
-    res.redirect('/books')
-}
-
-
+  renderNewPage(res, new Book())
 })
 
 // create book route
@@ -60,4 +50,27 @@ router.post('/', upload.single('cover'), async (req, res) => {
     renderNewPage(res, book, true)
   }
 })
+
+
+function removeBookCover(fileName) {
+  fs.unlink(path.join(uploadPath, fileName), err => {
+    if (err) console.error(err)
+  })
+}
+
+async function renderNewPage(res, book, hasError = false) {
+  try {
+    const authors = await Author.find({})
+    const params = {
+      authors: authors,
+      book: book
+    }
+    if (hasError) params.errorMessage = 'Error Creating Book'
+    res.render('books/new', params)
+  } catch {
+    res.redirect('/books')
+  }
+}
+
+
 module.exports = router
